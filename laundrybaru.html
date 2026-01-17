@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base target="_self">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshLaundry - Layanan Laundry Online</title>
+    <meta name="description" content="Layanan pemesanan laundry online dengan sistem CRUD dan nota pembelian">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#3b82f6",
+                        secondary: "#1e40af",
+                        accent: "#f59e0b"
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+            }
+            .print-area {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100">
+    <!-- Navigation -->
+    <header class="bg-white shadow-sm">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-tshirt text-2xl text-primary"></i>
+                <h1 class="text-xl font-bold text-gray-800">FreshLaundry</h1>
+            </div>
+            <div class="flex space-x-4">
+                <a href="#" class="text-gray-600 hover:text-primary" onclick="showSection('home')">Home</a>
+                <a href="#" class="text-gray-600 hover:text-primary" onclick="showSection('services')">Layanan</a>
+                <a href="#" class="text-gray-600 hover:text-primary" onclick="showSection('orders')">Pesanan</a>
+                <a href="#" class="text-gray-600 hover:text-primary" onclick="showSection('customers')">Pelanggan</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- Home Section -->
+        <section id="home-section" class="mb-12">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Selamat Datang di FreshLaundry</h2>
+                <p class="text-gray-600 mb-4">Layanan laundry online dengan kualitas terbaik dan harga terjangkau.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-primary/10 p-4 rounded-lg">
+                        <i class="fas fa-bolt text-primary text-2xl mb-2"></i>
+                        <h3 class="font-bold text-gray-800">Cepat</h3>
+                        <p class="text-gray-600">Proses cepat hanya 24 jam</p>
+                    </div>
+                    <div class="bg-accent/10 p-4 rounded-lg">
+                        <i class="fas fa-medal text-accent text-2xl mb-2"></i>
+                        <h3 class="font-bold text-gray-800">Bersih</h3>
+                        <p class="text-gray-600">Hasil bersih dan wangi</p>
+                    </div>
+                    <div class="bg-secondary/10 p-4 rounded-lg">
+                        <i class="fas fa-truck text-secondary text-2xl mb-2"></i>
+                        <h3 class="font-bold text-gray-800">Antar-Jemput</h3>
+                        <p class="text-gray-600">Gratis antar-jemput</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Services Section -->
+        <section id="services-section" class="mb-12 hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Daftar Layanan</h2>
+                    <button onclick="showAddServiceForm()" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">
+                        <i class="fas fa-plus mr-2"></i>Tambah Layanan
+                    </button>
+                </div>
+                
+                <!-- Add Service Form (Hidden by default) -->
+                <div id="add-service-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">Tambah Layanan Baru</h3>
+                    <form id="service-form" onsubmit="event.preventDefault(); handleServiceSubmit();">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="service-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Layanan</label>
+                                <input type="text" id="service-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="service-price" class="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
+                                <input type="number" id="service-price" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="service-duration" class="block text-sm font-medium text-gray-700 mb-1">Durasi (jam)</label>
+                                <input type="number" id="service-duration" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="service-description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                                <textarea id="service-description" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="hideAddServiceForm()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Batal</button>
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Services Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Layanan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durasi</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deskripsi</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="services-table-body" class="divide-y divide-gray-200">
+                            <!-- Services will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section id="orders-section" class="mb-12 hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Daftar Pesanan</h2>
+                    <button onclick="showAddOrderForm()" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">
+                        <i class="fas fa-plus mr-2"></i>Tambah Pesanan
+                    </button>
+                </div>
+                
+                <!-- Add Order Form (Hidden by default) -->
+                <div id="add-order-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">Tambah Pesanan Baru</h3>
+                    <form id="order-form" onsubmit="event.preventDefault(); handleOrderSubmit();">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="order-customer" class="block text-sm font-medium text-gray-700 mb-1">Pelanggan</label>
+                                <select id="order-customer" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="">Pilih Pelanggan</option>
+                                    <!-- Customers will be populated here -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="order-date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Pesanan</label>
+                                <input type="date" id="order-date" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="order-pickup-date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Jemput</label>
+                                <input type="date" id="order-pickup-date" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="order-delivery-date" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Antar</label>
+                                <input type="date" id="order-delivery-date" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Items Pesanan</label>
+                            <div class="space-y-4" id="order-items-container">
+                                <!-- Order items will be added here -->
+                            </div>
+                            <button type="button" onclick="addOrderItem()" class="mt-2 text-primary hover:text-secondary">
+                                <i class="fas fa-plus mr-1"></i>Tambah Item
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="order-status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                <select id="order-status" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Diproses</option>
+                                    <option value="completed">Selesai</option>
+                                    <option value="delivered">Terkirim</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="order-payment" class="block text-sm font-medium text-gray-700 mb-1">Pembayaran</label>
+                                <select id="order-payment" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                                    <option value="unpaid">Belum Dibayar</option>
+                                    <option value="partial">DP</option>
+                                    <option value="paid">Lunas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="order-notes" class="block text-sm font-medium text-gray-700 mb-1">Catatan</label>
+                                <textarea id="order-notes" class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="hideAddOrderForm()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Batal</button>
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Orders Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No. Pesanan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pelanggan</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body" class="divide-y divide-gray-200">
+                            <!-- Orders will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Customers Section -->
+        <section id="customers-section" class="mb-12 hidden">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Daftar Pelanggan</h2>
+                    <button onclick="showAddCustomerForm()" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">
+                        <i class="fas fa-plus mr-2"></i>Tambah Pelanggan
+                    </button>
+                </div>
+                
+                <!-- Add Customer Form (Hidden by default) -->
+                <div id="add-customer-form" class="hidden mb-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-4">Tambah Pelanggan Baru</h3>
+                    <form id="customer-form" onsubmit="event.preventDefault(); handleCustomerSubmit();">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label for="customer-name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                                <input type="text" id="customer-name" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="customer-phone" class="block text-sm font-medium text-gray-700 mb-1">No. Telepon</label>
+                                <input type="tel" id="customer-phone" required class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="customer-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" id="customer-email" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                            </div>
+                            <div>
+                                <label for="customer-address" class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+                                <textarea id="customer-address" required class="w-full px-3 py-2 border border-gray-300 rounded-md"></textarea>
+                            </div>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="button" onclick="hideAddCustomerForm()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">Batal</button>
+                            <button type="submit" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <!-- Customers Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead>
+                            <tr class="bg-gray-50">
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telepon</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customers-table-body" class="divide-y divide-gray-200">
+                            <!-- Customers will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Invoice Modal (Hidden by default) -->
+        <div id="invoice-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl print-area">
+                <div class="p-6">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">FreshLaundry</h2>
+                            <p class="text-gray-600">Jl.Al-hikmah mulyojati, Metro Barat, Kota Metro</p>
+                            <p class="text-gray-600">Telp: 0812-3456-7890</p>
+                        </div>
+                        <div class="text-right">
+                            <h3 class="text-xl font-bold text-gray-800">NOTA PESANAN</h3>
+                            <p class="text-gray-600">No: <span id="invoice-number">INV-001</span></p>
+                            <p class="text-gray-600">Tanggal: <span id="invoice-date">01 Jan 2023</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                        <div>
+                            <h4 class="font-bold text-gray-800 mb-2">Informasi Pelanggan</h4>
+                            <p id="invoice-customer-name" class="text-gray-600">Nama: John Doe</p>
+                            <p id="invoice-customer-phone" class="text-gray-600">Telp: 0812-3456-7890</p>
+                            <p id="invoice-customer-address" class="text-gray-600">Alamat: Jl. Pelanggan No. 456</p>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 mb-2">Informasi Pesanan</h4>
+                            <p id="invoice-order-date" class="text-gray-600">Tanggal Pesan: 01 Jan 2023</p>
+                            <p id="invoice-pickup-date" class="text-gray-600">Tanggal Jemput: 02 Jan 2023</p>
+                            <p id="invoice-delivery-date" class="text-gray-600">Tanggal Antar: 03 Jan 2023</p>
+                            <p id="invoice-status" class="text-gray-600">Status: Diproses</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <table class="min-w-full border border-gray-200">
+                            <thead>
+                                <tr class="bg-gray-50">
+                                    <th class="px-4 py-2 text-left border-b">No</th>
+                                    <th class="px-4 py-2 text-left border-b">Layanan</th>
+                                    <th class="px-4 py-2 text-left border-b">Harga</th>
+                                    <th class="px-4 py-2 text-left border-b">Qty</th>
+                                    <th class="px-4 py-2 text-left border-b">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoice-items">
+                                <!-- Invoice items will be populated here -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right font-bold border-t">Total</td>
+                                    <td class="px-4 py-2 font-bold border-t" id="invoice-total">Rp 0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right font-bold">DP</td>
+                                    <td class="px-4 py-2" id="invoice-downpayment">Rp 0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right font-bold">Sisa</td>
+                                    <td class="px-4 py-2" id="invoice-remaining">Rp 0</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h4 class="font-bold text-gray-800 mb-2">Catatan</h4>
+                        <p id="invoice-notes" class="text-gray-600">-</p>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8 no-print">
+                        <button onclick="printInvoice()" class="bg-primary text-white px-4 py-2 rounded hover:bg-secondary transition">
+                            <i class="fas fa-print mr-2"></i>Cetak
+                        </button>
+                        <button onclick="closeInvoice()" class="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-100">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">FreshLaundry</h3>
+                    <p class="text-gray-300">Layanan laundry online dengan kualitas terbaik dan harga terjangkau.</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Kontak</h3>
+                    <p class="text-gray-300"><i class="fas fa-phone-alt mr-2"></i> 0812-3456-7890</p>
+                    <p class="text-gray-300"><i class="fas fa-envelope mr-2"></i> info@freshlaundry.com</p>
+                    <p class="text-gray-300"><i class="fas fa-map-marker-alt mr-2"></i> Jl. Al-hikmah, Mulyojati, Metro Barat, Kota metro</p>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Jam Operasional</h3>
+                    <p class="text-gray-300">Senin - Jumat: 08.00 - 17.00</p>
+                    <p class="text-gray-300">Sabtu: 08.00 - 15.00</p>
+                    <p class="text-gray-300">Minggu: Libur</p>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>&copy; 2023 FreshLaundry. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- SQL Database Simulation -->
+    <script>
+        // Database tables (simulating SQL database)
+        const database = {
+            services: [
+                { id: 1, name: "Cuci Setrika", price: 10000, duration: 24, description: "Cuci bersih + setrika rapi" },
+                { id: 2, name: "Cuci Kering", price: 7000, duration: 24, description: "Cuci bersih saja" },
+                { id: 3, name: "Setrika", price: 5000, duration: 12, description: "Setrika saja" },
+                { id: 4, name: "Dry Cleaning", price: 25000, duration: 48, description: "Dry cleaning khusus" }
+            ],
+            customers: [
+                { id: 1, name: "John Doe", phone: "081234567890", email: "john@example.com", address: "Jl. Pelanggan No. 456" },
+                { id: 2, name: "Jane Smith", phone: "081298765432", email: "jane@example.com", address: "Jl. Pelanggan No. 789" }
+            ],
+            orders: [
+                { 
+                    id: 1, 
+                    customerId: 1, 
+                    date: "2023-01-01", 
+                    pickupDate: "2023-01-02", 
+                    deliveryDate: "2023-01-03", 
+                    status: "processing", 
+                    payment: "partial", 
+                    notes: "Baju warna putih dipisahkan", 
+                    items: [
+                        { serviceId: 1, quantity: 5, price: 10000 },
+                        { serviceId: 3, quantity: 2, price: 5000 }
+                    ],
+                    downpayment: 30000
+                }
+            ],
+            nextId: {
+                services: 5,
+                customers: 3,
+                orders: 2
+            }
+        };
+
+        // Helper functions
+        function formatDate(dateString) {
+            if (!dateString) return "-";
+            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
+        }
+
+        function calculateOrderTotal(order) {
+            return order.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        // Section Navigation
+        function showSection(section) {
+            document.getElementById('home-section').classList.add('hidden');
+            document.getElementById('services-section').classList.add('hidden');
+            document.getElementById('orders-section').classList.add('hidden');
+            document.getElementById('customers-section').classList.add('hidden');
+            
+            document.getElementById(`${section}-section`).classList.remove('hidden');
+        }
+
+        // Services CRUD
+        function showAddServiceForm() {
+            document.getElementById('add-service-form').classList.remove('hidden');
+            document.getElementById('service-form').reset();
+            document.getElementById('service-form').dataset.mode = 'add';
+        }
+
+        function hideAddServiceForm() {
+            document.getElementById('add-service-form').classList.add('hidden');
+        }
+
+        function renderServicesTable() {
+            const tbody = document.getElementById('services-table-body');
+            tbody.innerHTML = '';
+            
+            database.services.forEach(service => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${service.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(service.price)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${service.duration} jam</td>
+                    <td class="px-6 py-4">${service.description}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="editService(${service.id})" class="text-primary hover:text-secondary mr-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteService(${service.id})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function editService(id) {
+            const service = database.services.find(s => s.id === id);
+            if (!service) return;
+            
+            document.getElementById('service-name').value = service.name;
+            document.getElementById('service-price').value = service.price;
+            document.getElementById('service-duration').value = service.duration;
+            document.getElementById('service-description').value = service.description;
+            
+            document.getElementById('service-form').dataset.mode = 'edit';
+            document.getElementById('service-form').dataset.id = id;
+            document.getElementById('add-service-form').classList.remove('hidden');
+        }
+
+        function deleteService(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
+                database.services = database.services.filter(s => s.id !== id);
+                renderServicesTable();
+            }
+        }
+
+        function handleServiceSubmit() {
+            const form = document.getElementById('service-form');
+            const mode = form.dataset.mode;
+            const name = document.getElementById('service-name').value;
+            const price = parseInt(document.getElementById('service-price').value);
+            const duration = parseInt(document.getElementById('service-duration').value);
+            const description = document.getElementById('service-description').value;
+            
+            if (mode === 'add') {
+                const newService = {
+                    id: database.nextId.services++,
+                    name,
+                    price,
+                    duration,
+                    description
+                };
+                database.services.push(newService);
+            } else {
+                const id = parseInt(form.dataset.id);
+                const service = database.services.find(s => s.id === id);
+                if (service) {
+                    service.name = name;
+                    service.price = price;
+                    service.duration = duration;
+                    service.description = description;
+                }
+            }
+            
+            renderServicesTable();
+            hideAddServiceForm();
+        }
+
+        // Customers CRUD
+        function showAddCustomerForm() {
+            document.getElementById('add-customer-form').classList.remove('hidden');
+            document.getElementById('customer-form').reset();
+            document.getElementById('customer-form').dataset.mode = 'add';
+        }
+
+        function hideAddCustomerForm() {
+            document.getElementById('add-customer-form').classList.add('hidden');
+        }
+
+        function renderCustomersTable() {
+            const tbody = document.getElementById('customers-table-body');
+            tbody.innerHTML = '';
+            
+            database.customers.forEach(customer => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${customer.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${customer.phone}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${customer.email || '-'}</td>
+                    <td class="px-6 py-4">${customer.address}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="editCustomer(${customer.id})" class="text-primary hover:text-secondary mr-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteCustomer(${customer.id})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Also update customer dropdown in orders form
+            updateCustomerDropdown();
+        }
+
+        function editCustomer(id) {
+            const customer = database.customers.find(c => c.id === id);
+            if (!customer) return;
+            
+            document.getElementById('customer-name').value = customer.name;
+            document.getElementById('customer-phone').value = customer.phone;
+            document.getElementById('customer-email').value = customer.email || '';
+            document.getElementById('customer-address').value = customer.address;
+            
+            document.getElementById('customer-form').dataset.mode = 'edit';
+            document.getElementById('customer-form').dataset.id = id;
+            document.getElementById('add-customer-form').classList.remove('hidden');
+        }
+
+        function deleteCustomer(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus pelanggan ini?')) {
+                database.customers = database.customers.filter(c => c.id !== id);
+                renderCustomersTable();
+            }
+        }
+
+        function handleCustomerSubmit() {
+            const form = document.getElementById('customer-form');
+            const mode = form.dataset.mode;
+            const name = document.getElementById('customer-name').value;
+            const phone = document.getElementById('customer-phone').value;
+            const email = document.getElementById('customer-email').value;
+            const address = document.getElementById('customer-address').value;
+            
+            if (mode === 'add') {
+                const newCustomer = {
+                    id: database.nextId.customers++,
+                    name,
+                    phone,
+                    email,
+                    address
+                };
+                database.customers.push(newCustomer);
+            } else {
+                const id = parseInt(form.dataset.id);
+                const customer = database.customers.find(c => c.id === id);
+                if (customer) {
+                    customer.name = name;
+                    customer.phone = phone;
+                    customer.email = email;
+                    customer.address = address;
+                }
+            }
+            
+            renderCustomersTable();
+            hideAddCustomerForm();
+        }
+
+        function updateCustomerDropdown() {
+            const select = document.getElementById('order-customer');
+            // Clear existing options except the first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            
+            database.customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = `${customer.name} (${customer.phone})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Orders CRUD
+        function showAddOrderForm() {
+            document.getElementById('add-order-form').classList.remove('hidden');
+            document.getElementById('order-form').reset();
+            document.getElementById('order-items-container').innerHTML = '';
+            document.getElementById('order-form').dataset.mode = 'add';
+            document.getElementById('order-date').valueAsDate = new Date();
+            
+            // Add one empty item by default
+            addOrderItem();
+        }
+
+        function hideAddOrderForm() {
+            document.getElementById('add-order-form').classList.add('hidden');
+        }
+
+        function addOrderItem() {
+            const container = document.getElementById('order-items-container');
+            const itemId = Date.now(); // Unique ID for the item
+            
+            const div = document.createElement('div');
+            div.className = 'border border-gray-200 rounded p-3';
+            div.dataset.itemId = itemId;
+            div.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Layanan</label>
+                        <select class="order-item-service w-full px-3 py-2 border border-gray-300 rounded-md" onchange="updateItemPrice(this)">
+                            <option value="">Pilih Layanan</option>
+                            ${database.services.map(service => 
+                                `<option value="${service.id}" data-price="${service.price}">${service.name} (${formatCurrency(service.price)})</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Harga</label>
+                        <input type="number" class="order-item-price w-full px-3 py-2 border border-gray-300 rounded-md" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+                        <input type="number" min="1" value="1" class="order-item-quantity w-full px-3 py-2 border border-gray-300 rounded-md" onchange="updateItemSubtotal(this)">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-2">
+                    <button type="button" onclick="removeOrderItem('${itemId}')" class="text-red-500 hover:text-red-700 text-sm">
+                        <i class="fas fa-trash mr-1"></i>Hapus
+                    </button>
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeOrderItem(itemId) {
+            const item = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (item) item.remove();
+        }
+
+        function updateItemPrice(select) {
+            const price = select.options[select.selectedIndex]?.dataset.price || 0;
+            const itemDiv = select.closest('[data-item-id]');
+            itemDiv.querySelector('.order-item-price').value = price;
+        }
+
+        function updateItemSubtotal(input) {
+            // Not used in this implementation but can be added for real-time calculation
+        }
+
+        function renderOrdersTable() {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = '';
+            
+            database.orders.forEach(order => {
+                const customer = database.customers.find(c => c.id === order.customerId);
+                const total = calculateOrderTotal(order);
+                
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">#${order.id.toString().padStart(3, '0')}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${customer?.name || 'Pelanggan tidak ditemukan'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatDate(order.date)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(total)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 py-1 text-xs rounded-full 
+                            ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                              order.status === 'processing' ? 'bg-blue-100 text-blue-800' : 
+                              order.status === 'completed' ? 'bg-green-100 text-green-800' : 
+                              'bg-gray-100 text-gray-800'}">
+                            ${order.status === 'pending' ? 'Pending' : 
+                             order.status === 'processing' ? 'Diproses' : 
+                             order.status === 'completed' ? 'Selesai' : 
+                             'Terkirim'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button onclick="viewOrder(${order.id})" class="text-primary hover:text-secondary mr-2">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="editOrder(${order.id})" class="text-primary hover:text-secondary mr-2">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteOrder(${order.id})" class="text-red-500 hover:text-red-700">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function viewOrder(id) {
+            const order = database.orders.find(o => o.id === id);
+            if (!order) return;
+            
+            const customer = database.customers.find(c => c.id === order.customerId);
+            const total = calculateOrderTotal(order);
+            const remaining = total - (order.downpayment || 0);
+            
+            // Populate invoice data
+            document.getElementById('invoice-number').textContent = `INV-${order.id.toString().padStart(3, '0')}`;
+            document.getElementById('invoice-date').textContent = formatDate(order.date);
+            
+            if (customer) {
+                document.getElementById('invoice-customer-name').textContent = `Nama: ${customer.name}`;
+                document.getElementById('invoice-customer-phone').textContent = `Telp: ${customer.phone}`;
+                document.getElementById('invoice-customer-address').textContent = `Alamat: ${customer.address}`;
+            }
+            
+            document.getElementById('invoice-order-date').textContent = `Tanggal Pesan: ${formatDate(order.date)}`;
+            document.getElementById('invoice-pickup-date').textContent = `Tanggal Jemput: ${formatDate(order.pickupDate)}`;
+            document.getElementById('invoice-delivery-date').textContent = `Tanggal Antar: ${formatDate(order.deliveryDate)}`;
+            document.getElementById('invoice-status').textContent = `Status: ${
+                order.status === 'pending' ? 'Pending' : 
+                order.status === 'processing' ? 'Diproses' : 
+                order.status === 'completed' ? 'Selesai' : 
+                'Terkirim'
+            }`;
+            
+            // Populate items
+            const itemsContainer = document.getElementById('invoice-items');
+            itemsContainer.innerHTML = '';
+            
+            order.items.forEach((item, index) => {
+                const service = database.services.find(s => s.id === item.serviceId);
+                const tr = document.createElement('tr');
+                tr.className = 'border-b border-gray-200';
+                tr.innerHTML = `
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2">${service?.name || 'Layanan tidak ditemukan'}</td>
+                    <td class="px-4 py-2">${formatCurrency(item.price)}</td>
+                    <td class="px-4 py-2">${item.quantity}</td>
+                    <td class="px-4 py-2">${formatCurrency(item.price * item.quantity)}</td>
+                `;
+                itemsContainer.appendChild(tr);
+            });
+            
+            // Set totals
+            document.getElementById('invoice-total').textContent = formatCurrency(total);
+            document.getElementById('invoice-downpayment').textContent = formatCurrency(order.downpayment || 0);
+            document.getElementById('invoice-remaining').textContent = formatCurrency(remaining);
+            document.getElementById('invoice-notes').textContent = order.notes || '-';
+            
+            // Show modal
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        function closeInvoice() {
+            document.getElementById('invoice-modal').classList.add('hidden');
+        }
+
+        function printInvoice() {
+            window.print();
+        }
+
+        function editOrder(id) {
+            const order = database.orders.find(o => o.id === id);
+            if (!order) return;
+            
+            // Set basic order info
+            document.getElementById('order-customer').value = order.customerId;
+            document.getElementById('order-date').value = order.date;
+            document.getElementById('order-pickup-date').value = order.pickupDate || '';
+            document.getElementById('order-delivery-date').value = order.deliveryDate || '';
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-payment').value = order.payment;
+            document.getElementById('order-notes').value = order.notes || '';
+            
+            // Clear and repopulate items
+            const container = document.getElementById('order-items-container');
+            container.innerHTML = '';
+            
+            order.items.forEach(item => {
+                const itemId = Date.now();
+                const service = database.services.find(s => s.id === item.serviceId);
+                
+                const div = document.createElement('div');
+                div.className = 'border border-gray-200 rounded p-3';
+                div.dataset.itemId = itemId;
+                div.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Layanan</label>
+                            <select class="order-item-service w-full px-3 py-2 border border-gray-300 rounded-md" onchange="updateItemPrice(this)">
+                                <option value="">Pilih Layanan</option>
+                                ${database.services.map(s => 
+                                    `<option value="${s.id}" data-price="${s.price}" ${s.id === item.serviceId ? 'selected' : ''}>
+                                        ${s.name} (${formatCurrency(s.price)})
+                                    </option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Harga</label>
+                            <input type="number" class="order-item-price w-full px-3 py-2 border border-gray-300 rounded-md" 
+                                value="${item.price}" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah</label>
+                            <input type="number" min="1" value="${item.quantity}" 
+                                class="order-item-quantity w-full px-3 py-2 border border-gray-300 rounded-md" 
+                                onchange="updateItemSubtotal(this)">
+                        </div>
+                    </div>
+                    <div class="flex justify-end mt-2">
+                        <button type="button" onclick="removeOrderItem('${itemId}')" class="text-red-500 hover:text-red-700 text-sm">
+                            <i class="fas fa-trash mr-1"></i>Hapus
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            // Set form mode
+            document.getElementById('order-form').dataset.mode = 'edit';
+            document.getElementById('order-form').dataset.id = id;
+            document.getElementById('add-order-form').classList.remove('hidden');
+        }
+
+        function deleteOrder(id) {
+            if (confirm('Apakah Anda yakin ingin menghapus pesanan ini?')) {
+                database.orders = database.orders.filter(o => o.id !== id);
+                renderOrdersTable();
+            }
+        }
+
+        function handleOrderSubmit() {
+            const form = document.getElementById('order-form');
+            const mode = form.dataset.mode;
+            
+            // Get order data
+            const customerId = parseInt(document.getElementById('order-customer').value);
+            const date = document.getElementById('order-date').value;
+            const pickupDate = document.getElementById('order-pickup-date').value || null;
+            const deliveryDate = document.getElementById('order-delivery-date').value || null;
+            const status = document.getElementById('order-status').value;
+            const payment = document.getElementById('order-payment').value;
+            const notes = document.getElementById('order-notes').value;
+            
+            // Get order items
+            const items = [];
+            document.querySelectorAll('[data-item-id]').forEach(itemDiv => {
+                const serviceId = parseInt(itemDiv.querySelector('.order-item-service').value);
+                const price = parseInt(itemDiv.querySelector('.order-item-price').value);
+                const quantity = parseInt(itemDiv.querySelector('.order-item-quantity').value);
+                
+                if (serviceId && price && quantity) {
+                    items.push({ serviceId, price, quantity });
+                }
+            });
+            
+            if (items.length === 0) {
+                alert('Pesanan harus memiliki minimal 1 item');
+                return;
+            }
+            
+            if (mode === 'add') {
+                const newOrder = {
+                    id: database.nextId.orders++,
+                    customerId,
+                    date,
+                    pickupDate,
+                    deliveryDate,
+                    status,
+                    payment,
+                    notes,
+                    items,
+                    downpayment: payment === 'partial' ? 30000 : (payment === 'paid' ? calculateOrderTotal({ items }) : 0)
+                };
+                database.orders.push(newOrder);
+            } else {
+                const id = parseInt(form.dataset.id);
+                const order = database.orders.find(o => o.id === id);
+                if (order) {
+                    order.customerId = customerId;
+                    order.date = date;
+                    order.pickupDate = pickupDate;
+                    order.deliveryDate = deliveryDate;
+                    order.status = status;
+                    order.payment = payment;
+                    order.notes = notes;
+                    order.items = items;
+                    order.downpayment = payment === 'partial' ? 30000 : (payment === 'paid' ? calculateOrderTotal({ items }) : 0);
+                }
+            }
+            
+            renderOrdersTable();
+            hideAddOrderForm();
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderServicesTable();
+            renderCustomersTable();
+            renderOrdersTable();
+            showSection('home');
+        });
+    </script>
+</body>
+</html>
